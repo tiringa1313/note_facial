@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+onnxruntime
+scipy
+numpy
+opencv-python
+sqlalchemy
+python-multipart
+insightface==0.7.3
