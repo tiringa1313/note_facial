@@ -8,7 +8,8 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 
 # Criar engine
-engine = create_engine(DATABASE_URL)
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+
 
 # Criar sessão
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
