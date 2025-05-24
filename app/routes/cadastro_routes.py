@@ -40,19 +40,27 @@ async def cadastrar_pessoa(
 
     # Gerar embedding com InsightFace
     embedding, face = gerar_embedding_insightface(imagem)
-    if embedding is None:
-        raise HTTPException(status_code=400, detail="Nenhum rosto detectado.")
+    if embedding is None or face.det_score < 0.95:
+        raise HTTPException(status_code=400, detail="Rosto detectado com baixa qualidade. Tente uma foto melhor.")
 
     # Salvar vetor e imagem recortada
     registrar_novo_rosto(imagem, embedding, face)
 
-    # Salvar imagem original (opcional)
+    # Salvar imagem original
     os.makedirs("base_faces", exist_ok=True)
     extensao = foto.filename.split(".")[-1]
     nome_arquivo = f"{face_id}.{extensao}"
     caminho_local = os.path.join("base_faces", nome_arquivo)
     with open(caminho_local, "wb") as f:
         f.write(conteudo)
+
+    # (Opcional) Salvar imagem recortada
+    try:
+        os.makedirs("base_faces_crop", exist_ok=True)
+        crop = face.crop_face()
+        cv2.imwrite(f"base_faces_crop/{face_id}.jpg", crop)
+    except Exception as e:
+        print(f"[AVISO] Falha ao salvar rosto recortado: {e}")
 
     # URL pública Railway
     url_publica = f"https://notefacial-production.up.railway.app/base_faces/{nome_arquivo}"
@@ -73,6 +81,7 @@ async def cadastrar_pessoa(
         "id": str(nova_pessoa.id),
         "foto_url": url_publica
     }
+
 
 
 @router.get("/{face_id}")
@@ -115,9 +124,12 @@ async def buscar_por_imagem(
     if embedding_novo is None:
         raise HTTPException(status_code=400, detail="Nenhum rosto detectado.")
 
-    # Comparar com embeddings existentes
+    # Comparar com base
     pasta = "base_embeddings"
-    limiar = 0.35  # cosine similarity ideal para ArcFace
+    LIMIAR_CERTO = 0.35
+    LIMIAR_POSSIVEL = 0.45
+
+    correspondencias = []
 
     for nome_arquivo in os.listdir(pasta):
         if nome_arquivo.endswith(".npy"):
@@ -125,17 +137,30 @@ async def buscar_por_imagem(
             embedding_existente = np.load(caminho)
 
             distancia = cosine(embedding_existente, embedding_novo)
-            if distancia < limiar:
-                face_id = nome_arquivo.replace(".npy", "")
-                pessoa = db.query(Pessoa).filter(Pessoa.face_id == face_id).first()
-                if pessoa:
-                    return {
-                        "encontrado": True,
-                        "faceId": str(pessoa.face_id),
-                        "nome": pessoa.nome,
-                        "documentoIdentificacao": pessoa.documento_identificacao,
-                        "fotoUrl": pessoa.foto_url,
-                        # outros campos se desejar
-                    }
+            face_id = nome_arquivo.replace(".npy", "")
+            
+            if distancia < LIMIAR_POSSIVEL:
+                correspondencias.append((face_id, distancia))
 
-    return {"encontrado": False}
+    if correspondencias:
+        # Ordena pela menor distância
+        correspondencias.sort(key=lambda x: x[1])
+        face_id, distancia = correspondencias[0]
+
+        pessoa = db.query(Pessoa).filter(Pessoa.face_id == face_id).first()
+        if pessoa:
+            if distancia < LIMIAR_CERTO:
+                status = "encontrado"
+            else:
+                status = "possivel_coincidencia"
+
+            return {
+                "status": status,
+                "distancia": round(distancia, 4),
+                "faceId": face_id,
+                "nome": pessoa.nome,
+                "documentoIdentificacao": pessoa.documento_identificacao,
+                "fotoUrl": pessoa.foto_url
+            }
+
+    return {"status": "nao_encontrado"}

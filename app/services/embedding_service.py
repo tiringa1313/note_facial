@@ -5,7 +5,8 @@ import numpy as np
 app = FaceAnalysis(name="buffalo_l", providers=["CPUExecutionProvider"])
 app.prepare(ctx_id=0)
 
-def gerar_embedding_insightface(image_np):
+def gerar_embedding(image_np):
+
     """
     Gera o embedding facial com ArcFace (InsightFace).
     Retorna: (vetor_embedding, objeto_face) ou (None, None) se falhar.

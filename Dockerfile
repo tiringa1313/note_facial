@@ -17,8 +17,10 @@ WORKDIR /app
 # Copia os arquivos para o container
 COPY . /app
 
-# Instala as dependências
-RUN pip install --upgrade pip
+# Atualiza o pip para a versão mais recente
+RUN python -m pip install --upgrade pip
+
+# Instala as dependências do projeto
 RUN pip install -r requirements.txt
 
 # Expõe a porta padrão do FastAPI
