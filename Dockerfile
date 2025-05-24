@@ -23,11 +23,9 @@ RUN python -m pip install --upgrade pip
 # Instala as dependências do projeto
 RUN pip install -r requirements.txt
 
-# Expõe a porta padrão do FastAPI
-EXPOSE 10000
-
-# Comando para iniciar a API
+# Expõe apenas a porta padrão esperada pelo Railway
 EXPOSE 8080
 
+# Comando para iniciar a API
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
 
