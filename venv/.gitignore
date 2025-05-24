@@ -1,0 +1,19 @@
+# Ignorar ambiente virtual
+venv/
+
+# Arquivos compilados do Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Arquivos binários e modelos grandes
+*.pyd
+*.dat
+*.onnx
+*.zip
+
+# Diretórios específicos do projeto
+.insightface/
+base_faces/
+base_faces_crop/
+base_embeddings/
