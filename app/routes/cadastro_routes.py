@@ -5,6 +5,10 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from scipy.spatial.distance import cosine
+from app.services.embedding_service import gerar_embedding_insightface
+
+
+
 
 from app.models.pessoa_model import Pessoa
 from app.database import SessionLocal
