@@ -3,7 +3,7 @@ import uuid
 import cv2
 import numpy as np
 from fastapi import UploadFile
-from app.services.embedding_service import gerar_embedding
+from app.services.embedding_service import gerar_embedding_insightface
 from app.services.comparador_service import comparar_com_base
 from app.services.registro_service import registrar_novo_rosto
 
